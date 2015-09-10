@@ -39,19 +39,34 @@
 }
 
 - (void)reloadData {
+    if (self.animateAppearance) {
+        self.animateAppearance = NO;
+        self.transform = CGAffineTransformMakeScale(0, 0);
+        [UIView animateWithDuration:0.7 delay:0.0 usingSpringWithDamping:0.7 initialSpringVelocity:0.1 options:0 animations:^{
+            self.transform = CGAffineTransformMakeScale(1, 1);
+        } completion:^(BOOL finished) {}];
+    }
     [self plotPages];
 }
 
 - (void)plotPages {
     [self setNeedsLayout];
     [self layoutIfNeeded];
-    NSLog(@"Size: %@", NSStringFromCGRect(self.frame));
+    
+    for (id subview in self.scrollView.subviews) {
+        if ([subview isKindOfClass:[UIView class]]) {
+            [(UIView *)subview removeFromSuperview];
+        }
+    }
+    [self.scrollView setContentSize:CGSizeZero];
+    [self.pages removeAllObjects];
     
     NSInteger pageCount = [self.dataSource numberOfSectionsInScroller];
-    
-    for (int i = 0; i < pageCount; i++) {
+    for (NSInteger i = 0; i < pageCount; i++) {
         ScrollPage *page = [[ScrollPage alloc] initWithFrame:CGRectZero];
-        page.counter = [NSString stringWithFormat:@"%d",i];
+        page.sectionIndex = i;
+        page.numberOfItems = [self.dataSource numberOfItemsInSection:i];
+        page.counter = [NSString stringWithFormat:@"%ld",[self.dataSource numberOfItemsInSection:i]];
         [self.pages addObject:page];
     }
     
@@ -65,6 +80,7 @@
     for (int i = 0; i<self.pages.count; i++) {
         ScrollPage *page = self.pages[i];
         [page setFrame:CGRectMake(0, verticalPosition, self.frame.size.width, self.frame.size.height)];
+        [page plot];
         [self.scrollView addSubview:page];
         verticalPosition += self.frame.size.height;
     }
@@ -72,16 +88,27 @@
     [self.scrollView scrollRectToVisible:CGRectMake(0, self.frame.size.height, self.frame.size.width, self.frame.size.height) animated:NO];
 }
 
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView {
+
+    
+    CGFloat currentPage = scrollView.contentOffset.y / self.frame.size.height - 1;
+    NSLog(@"offset: %.2f -- page: %.2f rounded: %ld",scrollView.contentOffset.y, currentPage, [self getCurrentPageFromOffset:scrollView.contentOffset.y]);
+}
+
+-(NSInteger)getCurrentPageFromOffset:(CGFloat)offset {
+    CGFloat currentPage = offset / self.frame.size.height - 1;
+    NSInteger theoreticalPage = lroundf(currentPage);
+    
+    
+    
+    return lroundf(currentPage);
+}
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
-    NSLog(@"%f",scrollView.contentOffset.y);
-
     if (scrollView.contentOffset.y == 0) {
         [scrollView scrollRectToVisible:CGRectMake(0,scrollView.contentSize.height-2*scrollView.frame.size.height,self.frame.size.width,self.frame.size.height) animated:NO];
     }
     else if (scrollView.contentOffset.y == scrollView.contentSize.height - scrollView.frame.size.height) {
-        // user is scrolling to the right from image 4 to image 1
-        // reposition offset to show image 1 that is on the left in the scroll view
         [scrollView scrollRectToVisible:CGRectMake(0,scrollView.frame.size.height,self.frame.size.width,self.frame.size.height) animated:NO];
     } 
 }

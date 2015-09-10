@@ -10,10 +10,14 @@
 
 @protocol VerticalScrollerDataSource <NSObject>
 - (NSInteger)numberOfSectionsInScroller;
+- (NSInteger)numberOfItemsInSection:(NSInteger)section;
+- (NSString *)titleForItemAtIndexPath:(NSIndexPath *)indexPath;
+- (id)viewControllerForIndexPath:(NSIndexPath *)indexPath;
 @end
 
 
 @interface VerticalScroller : UIView
 @property (nonatomic) id <VerticalScrollerDataSource> dataSource;
+@property (nonatomic) BOOL animateAppearance;
 - (void)reloadData;
 @end

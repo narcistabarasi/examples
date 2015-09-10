@@ -9,5 +9,9 @@
 #import <UIKit/UIKit.h>
 
 @interface ScrollPage : UIView
+@property (nonatomic) NSInteger sectionIndex;
+@property (nonatomic) NSInteger numberOfItems;
 @property (nonatomic, retain) NSString *counter;
+@property (nonatomic, retain) NSMutableArray *indexPaths;
+- (void)plot;
 @end
